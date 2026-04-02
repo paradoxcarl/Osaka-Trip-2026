@@ -92,7 +92,6 @@
         .itin-content { padding: 12px 15px; padding-right: 50px; flex: 1; display: flex; flex-direction: column; justify-content: center; gap: 4px; }
         .itin-loc { font-size: 1.05rem; font-weight: 700; color: var(--dark-pink); }
         
-        /* 核心修改：交通與備註皆支援換行 */
         .itin-detail-row { display: flex; align-items: flex-start; gap: 6px; font-size: 0.82rem; color: var(--text-color); opacity: 0.9; white-space: pre-wrap; }
         .itin-notes-row { display: flex; align-items: flex-start; gap: 6px; font-size: 0.8rem; color: #8d6e63; margin-top: 2px; white-space: pre-wrap; }
 
@@ -143,7 +142,6 @@
         .phrase-item b { display: block; color: var(--dark-pink); font-size: 1rem; margin-bottom: 4px; }
         .phrase-item .romaji { display: block; color: var(--main-purple); font-size: 0.75rem; font-style: italic; margin-top: 2px; }
         
-        /* 清單專屬 */
         .who-container { display: flex; align-items: center; gap: 8px; overflow-x: auto; padding-bottom: 5px; }
         .who-chip { position: relative; flex: 0 0 auto; padding: 8px 16px; border-radius: 50px; background: #f5f5f5; border: 2px solid transparent; font-size: 0.8rem; color: #888; font-weight: 700; cursor: pointer; }
         .who-chip.active { background: #fff0f3; border-color: var(--dark-pink); color: var(--dark-pink); }
@@ -474,10 +472,11 @@
         // --- 旅伴與分類管理 ---
         let currentWho = localStorage.getItem('osaka_who') || '沒有人';
         let membersData = [];
-        let categories = ['行李', '購物', '必去景點'];
-        let currentCat = '行李';
+        let categoriesData = []; // 改為從 Supabase 讀取的物件陣列
+        let currentCat = '';
         let allItems = [];
 
+        // 旅伴管理
         async function refreshMembers() {
             const remote = await sbFetch('members?order=id.asc');
             let data = (remote && remote.length) ? remote : [{name: '沒有人'}];
@@ -530,42 +529,88 @@
         }
         async function deleteWhoMember(id) { if (confirm(`確定刪除？`)) { await sbFetch(`members?id=eq.${id}`, { method: 'DELETE' }); await refreshMembers(); openWhoManageModal(); } }
 
-        function sortCategory(idx, direction) {
-            const newIdx = idx + direction; if (newIdx < 0 || newIdx >= categories.length) return;
-            const temp = categories[idx]; categories[idx] = categories[newIdx]; categories[newIdx] = temp;
-            saveCategories(); openCatModal();
+        // --- 清單分類連動 Supabase ---
+        async function refreshCategories() {
+            const data = await sbFetch('checklist_categories?order=sort_order.asc');
+            categoriesData = data.length > 0 ? data : [];
+            if (!currentCat && categoriesData.length > 0) currentCat = categoriesData[0].name;
+            renderChecklistTabs();
+            renderItems();
         }
+
+        async function addCategory() {
+            const val = document.getElementById('new-cat-input').value;
+            if (val) {
+                const nextSort = categoriesData.length > 0 ? categoriesData[categoriesData.length-1].sort_order + 1 : 1;
+                await sbFetch('checklist_categories', { method: 'POST', body: JSON.stringify({ name: val, sort_order: nextSort }) });
+                document.getElementById('new-cat-input').value = '';
+                await refreshCategories();
+                openCatModal();
+            }
+        }
+
+        async function editCategory(id, oldName) {
+            const newName = prompt('請輸入新的分類名稱：', oldName);
+            if (newName && newName !== oldName) {
+                await sbFetch(`checklist_categories?id=eq.${id}`, { method: 'PATCH', body: JSON.stringify({ name: newName }) });
+                if (currentCat === oldName) currentCat = newName;
+                await refreshCategories();
+                openCatModal();
+            }
+        }
+
+        async function deleteCategory(id, name) {
+            if (confirm(`確定刪除分類「${name}」？這不會刪除該分類下的項目，但它們將無法顯示。`)) {
+                await sbFetch(`checklist_categories?id=eq.${id}`, { method: 'DELETE' });
+                if (currentCat === name) currentCat = categoriesData[0]?.name || '';
+                await refreshCategories();
+                openCatModal();
+            }
+        }
+
+        async function sortCategory(idx, direction) {
+            const targetIdx = idx + direction;
+            if (targetIdx < 0 || targetIdx >= categoriesData.length) return;
+            
+            const current = categoriesData[idx];
+            const target = categoriesData[targetIdx];
+            
+            const tempSort = current.sort_order;
+            await sbFetch(`checklist_categories?id=eq.${current.id}`, { method: 'PATCH', body: JSON.stringify({ sort_order: target.sort_order }) });
+            await sbFetch(`checklist_categories?id=eq.${target.id}`, { method: 'PATCH', body: JSON.stringify({ sort_order: tempSort }) });
+            
+            await refreshCategories();
+            openCatModal();
+        }
+
         function openCatModal() {
-            document.getElementById('cat-list-container').innerHTML = categories.map((c, i) => `
+            document.getElementById('cat-list-container').innerHTML = categoriesData.map((c, i) => `
                 <div style="display:flex; justify-content:space-between; align-items:center; padding:12px; border-bottom:1px solid #eee;">
-                    <span style="font-weight:700;">${c}</span>
+                    <span style="font-weight:700;">${c.name}</span>
                     <div class="manage-btn-group">
                         <button class="manage-icon-btn btn-sort-small" onclick="sortCategory(${i}, -1)">▲</button>
                         <button class="manage-icon-btn btn-sort-small" onclick="sortCategory(${i}, 1)">▼</button>
-                        <button class="manage-icon-btn btn-edit-small" onclick="editCategory(${i}, '${c}')">✏️</button>
-                        <button class="manage-icon-btn btn-del-small" onclick="deleteCategory(${i})">🗑️</button>
+                        <button class="manage-icon-btn btn-edit-small" onclick="editCategory(${c.id}, '${c.name}')">✏️</button>
+                        <button class="manage-icon-btn btn-del-small" onclick="deleteCategory(${c.id}, '${c.name}')">🗑️</button>
                     </div>
                 </div>
             `).join('');
             document.getElementById('cat-modal').classList.add('active');
         }
-        function addCategory() {
-            const val = document.getElementById('new-cat-input').value;
-            if (val && !categories.includes(val)) { categories.push(val); document.getElementById('new-cat-input').value = ''; saveCategories(); openCatModal(); }
-        }
-        function editCategory(idx, oldName) {
-            const newName = prompt('請輸入新的分類名稱：', oldName);
-            if (newName && newName !== oldName) { categories[idx] = newName; if (currentCat === oldName) currentCat = newName; saveCategories(); openCatModal(); }
-        }
-        function deleteCategory(idx) { if (confirm(`確定刪除？`)) { const deleted = categories.splice(idx, 1)[0]; if (currentCat === deleted) currentCat = categories[0] || ''; saveCategories(); openCatModal(); } }
-        function saveCategories() { localStorage.setItem('osaka_categories', JSON.stringify(categories)); renderChecklistTabs(); renderItems(); }
 
         async function refreshChecklist() {
             const data = await sbFetch('checklist_items?order=created_at.asc');
-            if (Array.isArray(data)) { allItems = data; renderChecklistTabs(); renderItems(); }
+            if (Array.isArray(data)) { allItems = data; renderItems(); }
         }
-        function renderChecklistTabs() { document.getElementById('cl-tabs').innerHTML = categories.map(c => `<button class="cl-tab-btn ${c === currentCat ? 'active' : ''}" onclick="switchClTab('${c}')">${c}</button>`).join(''); }
+
+        function renderChecklistTabs() { 
+            document.getElementById('cl-tabs').innerHTML = categoriesData.map(c => `
+                <button class="cl-tab-btn ${c.name === currentCat ? 'active' : ''}" onclick="switchClTab('${c.name}')">${c.name}</button>
+            `).join(''); 
+        }
+
         function switchClTab(c) { currentCat = c; renderChecklistTabs(); renderItems(); }
+
         function renderItems() {
             const listDiv = document.getElementById('cl-items-list'), items = allItems.filter(i => i.category === currentCat);
             if (items.length === 0) { listDiv.innerHTML = `<div style="text-align: center; color: #b39ddb; padding: 40px 20px; font-weight: 700; border: 2px dashed #f3e5f5; border-radius: 22px;">清單空空如也</div>`; return; }
@@ -617,8 +662,10 @@
         setInterval(createPetal, 1500);
 
         window.onload = () => {
-            const savedCat = localStorage.getItem('osaka_categories'); if (savedCat) categories = JSON.parse(savedCat);
-            refreshMembers(); refreshChecklist(); refreshItinerary();
+            refreshMembers(); 
+            refreshCategories();
+            refreshChecklist(); 
+            refreshItinerary();
         };
     </script>
 </body>
