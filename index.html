@@ -91,8 +91,10 @@
 
         .itin-content { padding: 12px 15px; padding-right: 50px; flex: 1; display: flex; flex-direction: column; justify-content: center; gap: 4px; }
         .itin-loc { font-size: 1.05rem; font-weight: 700; color: var(--dark-pink); }
-        .itin-detail-row { display: flex; align-items: flex-start; gap: 6px; font-size: 0.82rem; color: var(--text-color); opacity: 0.9; }
-        .itin-notes-row { display: flex; align-items: flex-start; gap: 6px; font-size: 0.8rem; color: #8d6e63; margin-top: 2px; }
+        
+        /* 核心修改：交通與備註皆支援換行 */
+        .itin-detail-row { display: flex; align-items: flex-start; gap: 6px; font-size: 0.82rem; color: var(--text-color); opacity: 0.9; white-space: pre-wrap; }
+        .itin-notes-row { display: flex; align-items: flex-start; gap: 6px; font-size: 0.8rem; color: #8d6e63; margin-top: 2px; white-space: pre-wrap; }
 
         .itin-action-group { position: absolute; right: 8px; top: 0; bottom: 0; display: flex; flex-direction: column; justify-content: center; gap: 6px; }
         .itin-action-btn { background: #fff; color: var(--dark-pink); border: 1px solid #fce4ec; width: 32px; height: 32px; border-radius: 50%; font-size: 0.85rem; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
@@ -166,7 +168,6 @@
         #fs-overlay { display: none; position: fixed; inset: 0; background: #fffafb; z-index: 2000; flex-direction: column; justify-content: center; align-items: center; padding: 30px; text-align: center; }
         #fs-overlay.active { display: flex; }
 
-        /* 列表管理中的按鈕樣式 */
         .manage-btn-group { display: flex; gap: 5px; }
         .manage-icon-btn { border: none; background: #f5f5f5; width: 32px; height: 32px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 0.9rem; }
         .btn-edit-small { color: #4285F4; }
@@ -233,12 +234,12 @@
                 <input type="text" id="form-map-query" placeholder="(選填) 輸入地點名稱或網址...">
             </div>
             <div class="form-group">
-                <label>交通方式及細節 (選填)</label>
-                <input type="text" id="form-trans" placeholder="(選填) 翼龍、鷹馬、礦車...">
+                <label>交通方式及細節 (選填，可換行)</label>
+                <textarea id="form-trans" rows="2" placeholder="(選填) 例如：地鐵御堂筋線 -> 公車 21 號..."></textarea>
             </div>
             <div class="form-group">
-                <label>備註 / 提醒 (選填)</label>
-                <textarea id="form-notes" rows="3" placeholder="(選填) 我不聽我不答應..."></textarea>
+                <label>備註 / 提醒 (選填，可換行)</label>
+                <textarea id="form-notes" rows="4" placeholder="(選填) 這裡可以換行寫詳細備註..."></textarea>
             </div>
             <div class="modal-btns">
                 <button id="btn-delete-itin" class="btn-cancel btn-delete-itin" style="display:none;" onclick="delItinFromModal()">刪除</button>
@@ -307,48 +308,9 @@
         <div id="cl-items-list"></div>
     </div>
 
-    <div id="who-manage-modal" class="overlay">
-        <div class="modal-content">
-            <div class="modal-title">旅伴管理</div>
-            <div id="who-list-container" style="max-height: 250px; overflow-y: auto; margin-bottom: 15px; border: 1px solid #f3e5f5; border-radius: 12px; padding: 5px;"></div>
-            <div class="form-group">
-                <label>新增旅伴</label>
-                <div style="display: flex; gap: 8px;">
-                    <input type="text" id="new-who-input" placeholder="名稱">
-                    <button class="btn-save" style="flex: 0 0 60px; padding: 5px;" onclick="addWho()">新增</button>
-                </div>
-            </div>
-            <div class="modal-btns">
-                <button class="btn-cancel" style="width: 100%;" onclick="closeModal('who-manage-modal')">關閉</button>
-            </div>
-        </div>
-    </div>
-
-    <div id="cat-modal" class="overlay">
-        <div class="modal-content">
-            <div class="modal-title">分類管理</div>
-            <div id="cat-list-container" style="max-height: 250px; overflow-y: auto; margin-bottom: 15px; border: 1px solid #f3e5f5; border-radius: 12px; padding: 5px;"></div>
-            <div class="form-group">
-                <label>新增分類</label>
-                <div style="display: flex; gap: 8px;">
-                    <input type="text" id="new-cat-input" placeholder="名稱">
-                    <button class="btn-save" style="flex: 0 0 60px; padding: 5px;" onclick="addCategory()">新增</button>
-                </div>
-            </div>
-            <div class="modal-btns">
-                <button class="btn-cancel" style="width: 100%;" onclick="closeModal('cat-modal')">關閉</button>
-            </div>
-        </div>
-    </div>
-
-    <div id="cl-item-modal" class="overlay">
-        <div class="modal-content">
-            <div class="modal-title" id="cl-modal-title">清單項目</div>
-            <input type="hidden" id="cl-edit-id">
-            <div class="form-group"><label>內容</label><input type="text" id="cl-text-input" placeholder="你想好了嗎？"></div>
-            <div class="modal-btns"><button class="btn-cancel" onclick="closeModal('cl-item-modal')">取消</button><button class="btn-save" onclick="saveClItem()">儲存</button></div>
-        </div>
-    </div>
+    <div id="who-manage-modal" class="overlay"><div class="modal-content"><div class="modal-title">旅伴管理</div><div id="who-list-container" style="max-height: 250px; overflow-y: auto; margin-bottom: 15px; border: 1px solid #f3e5f5; border-radius: 12px; padding: 5px;"></div><div class="form-group"><label>新增旅伴</label><div style="display: flex; gap: 8px;"><input type="text" id="new-who-input" placeholder="名稱"><button class="btn-save" style="flex: 0 0 60px; padding: 5px;" onclick="addWho()">新增</button></div></div><div class="modal-btns"><button class="btn-cancel" style="width: 100%;" onclick="closeModal('who-manage-modal')">關閉</button></div></div></div>
+    <div id="cat-modal" class="overlay"><div class="modal-content"><div class="modal-title">分類管理</div><div id="cat-list-container" style="max-height: 250px; overflow-y: auto; margin-bottom: 15px; border: 1px solid #f3e5f5; border-radius: 12px; padding: 5px;"></div><div class="form-group"><label>新增分類</label><div style="display: flex; gap: 8px;"><input type="text" id="new-cat-input" placeholder="名稱"><button class="btn-save" style="flex: 0 0 60px; padding: 5px;" onclick="addCategory()">新增</button></div></div><div class="modal-btns"><button class="btn-cancel" style="width: 100%;" onclick="closeModal('cat-modal')">關閉</button></div></div></div>
+    <div id="cl-item-modal" class="overlay"><div class="modal-content"><div class="modal-title" id="cl-modal-title">清單項目</div><input type="hidden" id="cl-edit-id"><div class="form-group"><label>內容</label><input type="text" id="cl-text-input" placeholder="你想好了嗎？"></div><div class="modal-btns"><button class="btn-cancel" onclick="closeModal('cl-item-modal')">取消</button><button class="btn-save" onclick="saveClItem()">儲存</button></div></div></div>
 
     <nav class="bottom-nav">
         <a href="#" class="nav-tab active" onclick="switchTab('itinerary', this)"><span class="nav-icon">📅</span><span>行程</span></a>
@@ -404,11 +366,8 @@
                 list.innerHTML = `<div style="text-align: center; color: #b39ddb; padding: 40px 20px; font-weight: 700; border: 2px dashed #f3e5f5; border-radius: 22px;">~快想想吧~<br>點擊 ＋ 號新增！</div>`;
                 return;
             }
-            list.innerHTML = items.map(i => {
-                const itemData = JSON.stringify(i).replace(/"/g, '"');
-                const hasMap = i.map_query && i.map_query.trim() !== '';
-                return `
-                <div class="itin-card" onclick='openItinDetail(${itemData})'>
+            list.innerHTML = items.map(i => `
+                <div class="itin-card" onclick='openItinDetail(${JSON.stringify(i)})'>
                     <div class="itin-time">${formatItinTime(i.time)}</div>
                     <div class="itin-content">
                         <div class="itin-loc">${i.location}</div>
@@ -416,11 +375,11 @@
                         ${i.notes ? `<div class="itin-notes-row"><span>📝 ${i.notes}</span></div>` : ''}
                     </div>
                     <div class="itin-action-group">
-                        <button class="itin-action-btn" onclick='event.stopPropagation(); openItinModal(${itemData})'>✏️</button>
-                        ${hasMap ? `<button class="itin-action-btn itin-map-btn" onclick="event.stopPropagation(); goToMap('${i.map_query}')">📍</button>` : ''}
+                        <button class="itin-action-btn" onclick='event.stopPropagation(); openItinModal(${JSON.stringify(i)})'>✏️</button>
+                        ${(i.map_query && i.map_query.trim() !== '') ? `<button class="itin-action-btn itin-map-btn" onclick="event.stopPropagation(); goToMap(\`${i.map_query}\`)">📍</button>` : ''}
                     </div>
                 </div>
-            `}).join('');
+            `).join('');
         }
 
         function openItinModal(item = null) {
@@ -512,7 +471,7 @@
             document.getElementById('fs-romaji').innerText = romaji; document.getElementById('fs-overlay').classList.add('active');
         }
 
-        // --- 旅伴與分類管理 (核心功能：排序) ---
+        // --- 旅伴與分類管理 ---
         let currentWho = localStorage.getItem('osaka_who') || '沒有人';
         let membersData = [];
         let categories = ['行李', '購物', '必去景點'];
@@ -522,8 +481,6 @@
         async function refreshMembers() {
             const remote = await sbFetch('members?order=id.asc');
             let data = (remote && remote.length) ? remote : [{name: '沒有人'}];
-            
-            // 讀取本地排序偏好
             const sortOrder = JSON.parse(localStorage.getItem('osaka_member_sort') || '[]');
             if (sortOrder.length > 0) {
                 data.sort((a, b) => {
@@ -537,26 +494,18 @@
             membersData = data;
             renderWhoSelector();
         }
-
         function renderWhoSelector() { 
             document.getElementById('who-selector').innerHTML = membersData.map(m => `
                 <div class="who-chip ${m.name === currentWho ? 'active' : ''}" onclick="setWho('${m.name}')">${m.name}</div>
             `).join(''); 
         }
         function setWho(name) { currentWho = name; localStorage.setItem('osaka_who', name); renderWhoSelector(); renderItems(); }
-
-        // 旅伴排序邏輯
         function sortWho(idx, direction) {
-            const newIdx = idx + direction;
-            if (newIdx < 0 || newIdx >= membersData.length) return;
-            const temp = membersData[idx];
-            membersData[idx] = membersData[newIdx];
-            membersData[newIdx] = temp;
+            const newIdx = idx + direction; if (newIdx < 0 || newIdx >= membersData.length) return;
+            const temp = membersData[idx]; membersData[idx] = membersData[newIdx]; membersData[newIdx] = temp;
             localStorage.setItem('osaka_member_sort', JSON.stringify(membersData.map(m => m.id)));
-            openWhoManageModal();
-            renderWhoSelector();
+            openWhoManageModal(); renderWhoSelector();
         }
-
         function openWhoManageModal() {
             document.getElementById('who-list-container').innerHTML = membersData.map((m, i) => `
                 <div style="display:flex; justify-content:space-between; align-items:center; padding:12px; border-bottom:1px solid #eee;">
@@ -577,25 +526,15 @@
         }
         async function editWho(id, oldName) {
             const newName = prompt('請輸入新的旅伴名稱：', oldName);
-            if (newName && newName !== oldName) {
-                await sbFetch(`members?id=eq.${id}`, { method: 'PATCH', body: JSON.stringify({ name: newName }) });
-                if (currentWho === oldName) currentWho = newName;
-                await refreshMembers(); openWhoManageModal();
-            }
+            if (newName && newName !== oldName) { await sbFetch(`members?id=eq.${id}`, { method: 'PATCH', body: JSON.stringify({ name: newName }) }); if (currentWho === oldName) currentWho = newName; await refreshMembers(); openWhoManageModal(); }
         }
         async function deleteWhoMember(id) { if (confirm(`確定刪除？`)) { await sbFetch(`members?id=eq.${id}`, { method: 'DELETE' }); await refreshMembers(); openWhoManageModal(); } }
 
-        // 分類管理與排序
         function sortCategory(idx, direction) {
-            const newIdx = idx + direction;
-            if (newIdx < 0 || newIdx >= categories.length) return;
-            const temp = categories[idx];
-            categories[idx] = categories[newIdx];
-            categories[newIdx] = temp;
-            saveCategories();
-            openCatModal();
+            const newIdx = idx + direction; if (newIdx < 0 || newIdx >= categories.length) return;
+            const temp = categories[idx]; categories[idx] = categories[newIdx]; categories[newIdx] = temp;
+            saveCategories(); openCatModal();
         }
-
         function openCatModal() {
             document.getElementById('cat-list-container').innerHTML = categories.map((c, i) => `
                 <div style="display:flex; justify-content:space-between; align-items:center; padding:12px; border-bottom:1px solid #eee;">
@@ -616,11 +555,7 @@
         }
         function editCategory(idx, oldName) {
             const newName = prompt('請輸入新的分類名稱：', oldName);
-            if (newName && newName !== oldName) {
-                categories[idx] = newName;
-                if (currentCat === oldName) currentCat = newName;
-                saveCategories(); openCatModal();
-            }
+            if (newName && newName !== oldName) { categories[idx] = newName; if (currentCat === oldName) currentCat = newName; saveCategories(); openCatModal(); }
         }
         function deleteCategory(idx) { if (confirm(`確定刪除？`)) { const deleted = categories.splice(idx, 1)[0]; if (currentCat === deleted) currentCat = categories[0] || ''; saveCategories(); openCatModal(); } }
         function saveCategories() { localStorage.setItem('osaka_categories', JSON.stringify(categories)); renderChecklistTabs(); renderItems(); }
@@ -637,7 +572,7 @@
             listDiv.innerHTML = items.map(i => `
                 <div class="cl-item ${i.done ? 'done' : ''}">
                     <div class="cl-check" onclick="toggleItem(${i.id}, ${i.done})">${i.done ? '✓' : ''}</div>
-                    <span class="cl-text" onclick='openClItemModal(${JSON.stringify(i).replace(/"/g, '"')})'>${i.text}</span>
+                    <span class="cl-text" onclick='openClItemModal(${JSON.stringify(i)})'>${i.text}</span>
                     <span class="cl-who">${i.who}</span>
                     <button class="cl-del" onclick="delItem(${i.id})">✕</button>
                 </div>
