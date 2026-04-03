@@ -25,7 +25,38 @@
         * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
         body { font-family: 'Noto Sans TC', sans-serif; background-color: var(--bg-color); color: var(--text-color); overflow-x: hidden; }
 
+/* 1. 正在被拖動的本體 (浮起效果) */
+.cl-item.sortable-chosen {
+    background-color: #fff !important;
+    box-shadow: 0 15px 30px rgba(179, 157, 219, 0.4);
+    transform: scale(1.02); /* 微微放大 */
+    z-index: 9999;
+    border: 2px solid var(--main-purple);
+    cursor: grabbing;
+}
 
+/* 2. 拖動時留下的「影子」 (目標位置) */
+.cl-item-ghost {
+    opacity: 0.3 !important;
+    background: var(--header-purple-light) !important;
+    border: 2px dashed var(--main-purple) !important;
+}
+
+/* 3. 優化把手樣式，增加感應範圍 */
+.cl-drag-handle {
+    cursor: grab;
+    padding: 10px; /* 增加點擊熱點 */
+    margin-right: 5px;
+    color: #ccc;
+    font-size: 20px;
+    display: flex;
+    align-items: center;
+    transition: color 0.2s;
+}
+
+.cl-item:active .cl-drag-handle {
+    color: var(--dark-pink);
+}
 
 /* 拖動時原本位置的虛線框 */
 .cl-item-ghost {
@@ -930,22 +961,44 @@ function renderItems() {
     // ✨ 依照 sort_order 排序
     items.sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0));
 
-    listDiv.innerHTML = items.map(i => `
+listDiv.innerHTML = items.map(i => `
         <div class="cl-item ${i.done ? 'done' : ''}" data-id="${i.id}">
-            <div class="cl-check" onclick="toggleItem(${i.id}, ${i.done})">${i.done ? '✓' : ''}</div>
-            <span class="cl-text" onclick='openClItemModal(${JSON.stringify(i)})'>${i.text}</span>
+            <div class="cl-drag-handle">⋮⋮</div> 
+            
+            <div class="cl-check" onclick="event.stopPropagation(); toggleItem(${i.id}, ${i.done})">
+                ${i.done ? '✓' : ''}
+            </div>
+            
+            <span class="cl-text" onclick='event.stopPropagation(); openClItemModal(${JSON.stringify(i)})'>
+                ${i.text}
+            </span>
+            
             <span class="cl-who">${i.who}</span>
-            <button class="cl-del" onclick="delItem(${i.id})">✕</button>
+            
+            <button class="cl-del" onclick="event.stopPropagation(); delItem(${i.id})">✕</button>
         </div>
     `).join('');
-
 new Sortable(listDiv, {
-        animation: 150,
-        delay: 200,      // ✨ 設定長按 200 毫秒才啟動拖拽
-        delayOnTouchOnly: true, // 僅在觸控裝置上生效
-        touchStartThreshold: 5, // 靈敏度防止誤觸
+        handle: '.cl-drag-handle', // 專屬把手
+        animation: 250,           // 速度稍微加快，感覺更輕盈
+        easing: "cubic-bezier(0.2, 0, 0, 1)", // 平滑減速效果
+        
+        // ✨ 手機 UX 核心設定
+        forceFallback: true,      // 模擬拖拽，避免原生拖拽在手機上的不穩定
+        fallbackOnBody: true,     // 拖拽時物件可以超出容器
+        swapThreshold: 0.65,      // 拖到一半就交換位置，不用完全重疊
+        
         ghostClass: 'cl-item-ghost',
+        chosenClass: 'sortable-chosen',
+        
+        onStart: function() {
+            // 拖動開始時，給手機一個震動回饋 (如果裝置支援)
+            if (navigator.vibrate) navigator.vibrate(50);
+            document.body.style.overflow = 'hidden'; // 防止拖動時頁面捲動
+        },
+        
         onEnd: async function () {
+            document.body.style.overflow = ''; // 恢復捲動
             await saveNewOrder();
         }
     });
