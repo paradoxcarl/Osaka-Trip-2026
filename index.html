@@ -345,8 +345,8 @@
                 <input type="text" id="form-map-query" placeholder="(選填) 輸入地點名稱或網址...">
             </div>
             <div class="form-group">
-                <label>交通方式及細節 (選填)</label>
-                <textarea id="form-trans" rows="2" placeholder="(選填) 例如：翼龍、鷹馬、礦車..."></textarea>
+                <label>交通方式 / 細節 (選填)</label>
+                <textarea id="form-trans" rows="2" placeholder="(選填) 翼龍、鷹馬、礦車..."></textarea>
             </div>
             <div class="form-group">
                 <label>備註 / 提醒 (選填)</label>
@@ -361,14 +361,14 @@
 
     <div id="page-itinerary" class="tab-content active">
         <div class="date-nav">
-            <div class="date-btn active" onclick="switchDay(8, this)"><span class="date-day">第一日</span><span class="date-num">4/8</span><span class="date-week">(三)</span></div>
-            <div class="date-btn" onclick="switchDay(9, this)"><span class="date-day">第二日</span><span class="date-num">4/9</span><span class="date-week">(四)</span></div>
-            <div class="date-btn" onclick="switchDay(10, this)"><span class="date-day">第三日</span><span class="date-num">4/10</span><span class="date-week">(五)</span></div>
-            <div class="date-btn" onclick="switchDay(11, this)"><span class="date-day">第四日</span><span class="date-num">4/11</span><span class="date-week">(六)</span></div>
-            <div class="date-btn" onclick="switchDay(12, this)"><span class="date-day">第五日</span><span class="date-num">4/12</span><span class="date-week">(日)</span></div>
-            <div class="date-btn" onclick="switchDay(13, this)"><span class="date-day">第六日</span><span class="date-num">4/13</span><span class="date-week">(一)</span></div>
-            <div class="date-btn" onclick="switchDay(14, this)"><span class="date-day">第七日</span><span class="date-num">4/14</span><span class="date-week">(二)</span></div>
-            <div class="date-btn" onclick="switchDay(15, this)"><span class="date-day">第八日</span><span class="date-num">4/15</span><span class="date-week">(三)</span></div>
+            <div class="date-btn active" onclick="switchDay(8, this)"><span class="date-day">第一日</span><span class="date-num">4/8</span><span class="date-week">(三、水)</span></div>
+            <div class="date-btn" onclick="switchDay(9, this)"><span class="date-day">第二日</span><span class="date-num">4/9</span><span class="date-week">(四、木)</span></div>
+            <div class="date-btn" onclick="switchDay(10, this)"><span class="date-day">第三日</span><span class="date-num">4/10</span><span class="date-week">(五、金)</span></div>
+            <div class="date-btn" onclick="switchDay(11, this)"><span class="date-day">第四日</span><span class="date-num">4/11</span><span class="date-week">(六、六)</span></div>
+            <div class="date-btn" onclick="switchDay(12, this)"><span class="date-day">第五日</span><span class="date-num">4/12</span><span class="date-week">(日、日)</span></div>
+            <div class="date-btn" onclick="switchDay(13, this)"><span class="date-day">第六日</span><span class="date-num">4/13</span><span class="date-week">(一、月)</span></div>
+            <div class="date-btn" onclick="switchDay(14, this)"><span class="date-day">第七日</span><span class="date-num">4/14</span><span class="date-week">(二、火)</span></div>
+            <div class="date-btn" onclick="switchDay(15, this)"><span class="date-day">第八日</span><span class="date-num">4/15</span><span class="date-week">(三、水)</span></div>
         </div>
         <div id="itinerary-list"></div>
     </div>
@@ -942,7 +942,6 @@ async function saveNewOrder() {
 
 function renderItems() {
     const listDiv = document.getElementById('cl-items-list');
-    // 過濾出當前分類的項目
     let items = allItems.filter(i => i.category === currentCat);
     
     if (items.length === 0) { 
@@ -950,36 +949,51 @@ function renderItems() {
         return; 
     }
 
-    // 確保畫面渲染前是排好的
-    items.sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0));
+    // 1. 分成兩組，並各自按 sort_order 排序
+    const pending = items.filter(i => !i.done).sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0));
+    const completed = items.filter(i => i.done).sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0));
 
-    listDiv.innerHTML = items.map(i => `
-        <div class="cl-item ${i.done ? 'done' : ''}" data-id="${i.id}">
+    // 2. 渲染畫面（中間加一個分隔線，讓視覺更清楚）
+    let html = pending.map(i => renderSingleItem(i)).join('');
+    
+    if (completed.length > 0) {
+        html += `<div class="cl-divider" style="text-align:center; font-size:12px; color:#ccc; margin:10px 0;">已完成項目</div>`;
+        html += completed.map(i => renderSingleItem(i)).join('');
+    }
+
+    listDiv.innerHTML = html;
+
+    // 3. 初始化 Sortable
+    new Sortable(listDiv, {
+        animation: 150,
+        delay: 100,
+        delayOnTouchOnly: false,
+        touchStartThreshold: 10,
+        filter: '.cl-check, .cl-del, .cl-divider', // ✨ 分隔線也要過濾掉不能拖
+        preventOnFilter: false,
+        ghostClass: 'cl-item-ghost',
+        onEnd: async function (evt) {
+            // ✨ 拖拽結束後，重新計算所有項目的 sort_order
+            await saveNewOrder();
+        }
+    });
+}
+
+// 輔助函式：減少重複程式碼
+function renderSingleItem(i) {
+    return `
+        <div class="cl-item ${i.done ? 'done' : ''}" data-id="${i.id}" data-done="${i.done}">
             <div class="cl-check" onclick="toggleItem(${i.id}, ${i.done})">${i.done ? '✓' : ''}</div>
             <span class="cl-text" onclick='openClItemModal(${JSON.stringify(i)})'>${i.text}</span>
             <span class="cl-who">${i.who}</span>
             <button class="cl-del" onclick="delItem(${i.id})">✕</button>
-        </div>
-    `).join('');
-
-    // 初始化拖拽
-    new Sortable(listDiv, {
-        animation: 150,
-        delay: 300,             // ✨ 長按 300 毫秒才啟動拖拽，避免一般點擊誤觸
-        delayOnTouchOnly: true, // 僅在手機/觸控螢幕上使用長按延遲
-        touchStartThreshold: 5, // 容許手抖的像素範圍
-        ghostClass: 'cl-item-ghost', // 你 CSS 已經寫好的虛線樣式
-        onEnd: async function () {
-            await saveNewOrder(); // 拖動完自動儲存
-        }
-    });
+        </div>`;
 }
 
         function openClItemModal(item = null) {
             const modal = document.getElementById('cl-item-modal'), input = document.getElementById('cl-text-input'), editId = document.getElementById('cl-edit-id');
             if (item) { input.value = item.text; editId.value = item.id; } else { input.value = ''; editId.value = ''; } modal.classList.add('active');
         }
-
 
 async function saveClItem() {
     const id = document.getElementById('cl-edit-id').value, 
@@ -1007,8 +1021,6 @@ async function saveClItem() {
     closeModal('cl-item-modal'); 
     refreshChecklist();
 }
-
-
         async function toggleItem(id, status) { await sbFetch(`checklist_items?id=eq.${id}`, { method: 'PATCH', body: JSON.stringify({ done: !status, who: currentWho }) }); refreshChecklist(); }
         async function delItem(id) { if (confirm('刪除項目？')) { await sbFetch(`checklist_items?id=eq.${id}`, { method: 'DELETE' }); refreshChecklist(); } }
 
