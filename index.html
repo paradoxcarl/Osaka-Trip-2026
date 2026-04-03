@@ -21,15 +21,21 @@
         * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
         body { font-family: 'Noto Sans TC', sans-serif; background-color: var(--bg-color); color: var(--text-color); overflow-x: hidden; }
 
-        /* 🌸 櫻花特效 🌸 */
-        .petal {
-            position: fixed; top: -10%; z-index: 999; pointer-events: none; 
-            background: linear-gradient(135deg, #fff0f3 0%, #ffc0cb 100%);
-            border-radius: 150% 150% 150% 150% / 200% 200% 150% 150%;
-            box-shadow: 1px 1px 2px rgba(255, 182, 193, 0.3);
-            display: flex; align-items: center; justify-content: center;
-            animation: petal-fall linear forwards, petal-shake ease-in-out infinite;
-        }
+/* 🌸 櫻花特效 修正版 🌸 */
+.petal {
+    position: fixed; 
+    top: -10%; 
+    z-index: 999; 
+    pointer-events: none; 
+    /* 移除 background, border-radius, box-shadow */
+    background: transparent; 
+    display: flex; 
+    align-items: center; 
+    justify-content: center;
+    /* 使用 drop-shadow 讓 Emoji 本身有淡淡的陰影感 */
+    filter: drop-shadow(2px 2px 2px rgba(255, 182, 193, 0.4));
+    animation: petal-fall linear forwards, petal-shake ease-in-out infinite;
+}
         @keyframes petal-fall { 0% { transform: translateY(0) rotate(0deg); } 100% { transform: translateY(110vh) rotate(450deg); } }
         @keyframes petal-shake { 0%, 100% { margin-left: 0px; } 50% { margin-left: 30px; } }
         @keyframes fadeInUp { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
@@ -395,7 +401,7 @@
                 <b>退房時間是幾點？</b><p>チェックアウトは何時ですか？</p><small class="romaji">Chekkuauto wa nanji desu ka?</small></div>
 
             <div class="phrase-item" onclick="openFS('チェックアウトをお願いします', '我要辦理退房', 'Chekkuauto o onegaishimasu')">
-                <b>我要辦理退房？</b><p>チェックアウトをお願いします</p><small class="romaji">Chekkuauto o onegaishimasu</small></div>
+                <b>我要辦理退房</b><p>チェックアウトをお願いします</p><small class="romaji">Chekkuauto o onegaishimasu</small></div>
         </div>
 
 
