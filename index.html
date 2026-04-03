@@ -819,9 +819,10 @@ document.addEventListener("visibilitychange", () => {
     } else {
         // 當使用者回到網頁：手動刷新一次，並重新連線
         console.log('應用回到前台，重新同步資料');
+        refreshMembers(); 
+        refreshCategories();
+        refreshChecklist(); 
         refreshItinerary();
-        refreshChecklist();
-        refreshMembers();
         subscribeRealtime();
     }
 });
