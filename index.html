@@ -961,23 +961,52 @@ function renderItems() {
     // ✨ 依照 sort_order 排序
     items.sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0));
 
-listDiv.innerHTML = items.map(i => `
+    listDiv.innerHTML = items.map(i => `
         <div class="cl-item ${i.done ? 'done' : ''}" data-id="${i.id}">
-            <div class="cl-drag-handle">⋮⋮</div> 
-            
-            <div class="cl-check" onclick="event.stopPropagation(); toggleItem(${i.id}, ${i.done})">
-                ${i.done ? '✓' : ''}
-            </div>
-            
-            <span class="cl-text" onclick='event.stopPropagation(); openClItemModal(${JSON.stringify(i)})'>
-                ${i.text}
-            </span>
-            
+            <div class="cl-check" onclick="toggleItem(${i.id}, ${i.done})">${i.done ? '✓' : ''}</div>
+            <span class="cl-text" onclick='openClItemModal(${JSON.stringify(i)})'>${i.text}</span>
             <span class="cl-who">${i.who}</span>
-            
-            <button class="cl-del" onclick="event.stopPropagation(); delItem(${i.id})">✕</button>
+            <button class="cl-del" onclick="delItem(${i.id})">✕</button>
         </div>
     `).join('');
+
+
+async function saveNewOrder() {
+    const listDiv = document.getElementById('cl-items-list');
+    const itemElements = listDiv.querySelectorAll('.cl-item');
+    
+    // 1. 取得畫面上目前的 ID 順序
+    const updates = Array.from(itemElements).map((el, index) => {
+        const id = el.getAttribute('data-id');
+        // 確保這裡的欄位名稱與資料庫完全一致：sort_order
+        return sbFetch(`checklist_items?id=eq.${id}`, {
+            method: 'PATCH',
+            body: JSON.stringify({ sort_order: index })
+        });
+    });
+
+    try {
+        console.log("正在更新排序到 Supabase...");
+        // 2. 等待所有 PATCH 請求完成
+        await Promise.all(updates);
+        console.log("排序更新成功！");
+        
+        // 3. ✨ 關鍵：重新從資料庫抓取「已排序」的最新資料
+        // 加入隨機參數防止瀏覽器快取 (Cache) 舊順序
+        const data = await sbFetch(`checklist_items?order=sort_order.asc&t=${Date.now()}`);
+        
+        if (Array.isArray(data)) {
+            allItems = data;
+            // 這裡不需要再次 render，因為畫面已經是正確的順序了
+            // 除非你想確保資料與 UI 完全同步
+        }
+    } catch (err) {
+        console.error("更新排序失敗，請檢查網路或欄位名稱:", err);
+    }
+}
+
+
+
 new Sortable(listDiv, {
         handle: '.cl-drag-handle', // 專屬把手
         animation: 250,           // 速度稍微加快，感覺更輕盈
