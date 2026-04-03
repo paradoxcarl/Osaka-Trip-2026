@@ -939,11 +939,12 @@ function renderItems() {
         </div>
     `).join('');
 
-    // ✨ 初始化拖拉排序
-    new Sortable(listDiv, {
+new Sortable(listDiv, {
         animation: 150,
+        delay: 200,      // ✨ 設定長按 200 毫秒才啟動拖拽
+        delayOnTouchOnly: true, // 僅在觸控裝置上生效
+        touchStartThreshold: 5, // 靈敏度防止誤觸
         ghostClass: 'cl-item-ghost',
-        // 當拖拉結束時觸發儲存
         onEnd: async function () {
             await saveNewOrder();
         }
