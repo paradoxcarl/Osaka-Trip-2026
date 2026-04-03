@@ -1,6 +1,10 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
+
+
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Osaka Trip</title>
@@ -20,6 +24,26 @@
 
         * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
         body { font-family: 'Noto Sans TC', sans-serif; background-color: var(--bg-color); color: var(--text-color); overflow-x: hidden; }
+
+
+
+/* 拖動時原本位置的虛線框 */
+.cl-item-ghost {
+    opacity: 0.5;
+    background: #f8bbd0 !important;
+    border: 2px dashed #ff8fa3 !important;
+}
+
+/* 提示使用者可以拖動 */
+.cl-item {
+    cursor: grab;
+    user-select: none; /* 防止拖動時選取到文字 */
+}
+
+.cl-item:active {
+    cursor: grabbing;
+}
+
 
 /* 🌸 櫻花特效 修正版 🌸 */
 .petal {
@@ -876,10 +900,14 @@
             document.getElementById('cat-modal').classList.add('active');
         }
 
-        async function refreshChecklist() {
-            const data = await sbFetch('checklist_items?order=created_at.asc');
-            if (Array.isArray(data)) { allItems = data; renderItems(); }
-        }
+async function refreshChecklist() {
+    // 改用 sort_order 排序抓取
+    const data = await sbFetch('checklist_items?order=sort_order.asc');
+    if (Array.isArray(data)) {
+        allItems = data;
+        renderItems();
+    }
+}
 
         function renderChecklistTabs() { 
             document.getElementById('cl-tabs').innerHTML = categoriesData.map(c => `
@@ -889,18 +917,39 @@
 
         function switchClTab(c) { currentCat = c; renderChecklistTabs(); renderItems(); }
 
-        function renderItems() {
-            const listDiv = document.getElementById('cl-items-list'), items = allItems.filter(i => i.category === currentCat);
-            if (items.length === 0) { listDiv.innerHTML = `<div style="text-align: center; color: #b39ddb; padding: 40px 20px; font-weight: 700; border: 2px dashed #f3e5f5; border-radius: 22px;">清單空空如也</div>`; return; }
-            listDiv.innerHTML = items.map(i => `
-                <div class="cl-item ${i.done ? 'done' : ''}">
-                    <div class="cl-check" onclick="toggleItem(${i.id}, ${i.done})">${i.done ? '✓' : ''}</div>
-                    <span class="cl-text" onclick='openClItemModal(${JSON.stringify(i)})'>${i.text}</span>
-                    <span class="cl-who">${i.who}</span>
-                    <button class="cl-del" onclick="delItem(${i.id})">✕</button>
-                </div>
-            `).join('');
+function renderItems() {
+    const listDiv = document.getElementById('cl-items-list');
+    // 過濾出當前分類的項目
+    let items = allItems.filter(i => i.category === currentCat);
+    
+    if (items.length === 0) { 
+        listDiv.innerHTML = `<div style="text-align: center; color: #b39ddb; padding: 40px 20px;">清單空空如也</div>`; 
+        return; 
+    }
+
+    // ✨ 依照 sort_order 排序
+    items.sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0));
+
+    listDiv.innerHTML = items.map(i => `
+        <div class="cl-item ${i.done ? 'done' : ''}" data-id="${i.id}">
+            <div class="cl-check" onclick="toggleItem(${i.id}, ${i.done})">${i.done ? '✓' : ''}</div>
+            <span class="cl-text" onclick='openClItemModal(${JSON.stringify(i)})'>${i.text}</span>
+            <span class="cl-who">${i.who}</span>
+            <button class="cl-del" onclick="delItem(${i.id})">✕</button>
+        </div>
+    `).join('');
+
+    // ✨ 初始化拖拉排序
+    new Sortable(listDiv, {
+        animation: 150,
+        ghostClass: 'cl-item-ghost',
+        // 當拖拉結束時觸發儲存
+        onEnd: async function () {
+            await saveNewOrder();
         }
+    });
+}
+
         function openClItemModal(item = null) {
             const modal = document.getElementById('cl-item-modal'), input = document.getElementById('cl-text-input'), editId = document.getElementById('cl-edit-id');
             if (item) { input.value = item.text; editId.value = item.id; } else { input.value = ''; editId.value = ''; } modal.classList.add('active');
