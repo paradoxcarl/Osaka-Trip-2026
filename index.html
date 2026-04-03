@@ -849,23 +849,9 @@
 
         function switchClTab(c) { currentCat = c; renderChecklistTabs(); renderItems(); }
 
- function renderItems() {
-            const listDiv = document.getElementById('cl-items-list');
-            // 過濾出當前分類的項目
-            let items = allItems.filter(i => i.category === currentCat);
-            
-            if (items.length === 0) { 
-                listDiv.innerHTML = `<div style="text-align: center; color: #b39ddb; padding: 40px 20px; font-weight: 700; border: 2px dashed #f3e5f5; border-radius: 22px;">清單空空如也</div>`; 
-                return; 
-            }
-
-            // ✨ 新增排序邏輯：未完成 (false) 在前，已完成 (true) 在後
-            // 如果 done 狀態相同，則維持原本的順序 (或是依據 ID/時間)
-            items.sort((a, b) => {
-                if (a.done === b.done) return 0; // 狀態相同不移動
-                return a.done ? 1 : -1;         // a 如果是 done(true) 就往後排 (1)
-            });
-
+        function renderItems() {
+            const listDiv = document.getElementById('cl-items-list'), items = allItems.filter(i => i.category === currentCat);
+            if (items.length === 0) { listDiv.innerHTML = `<div style="text-align: center; color: #b39ddb; padding: 40px 20px; font-weight: 700; border: 2px dashed #f3e5f5; border-radius: 22px;">清單空空如也</div>`; return; }
             listDiv.innerHTML = items.map(i => `
                 <div class="cl-item ${i.done ? 'done' : ''}">
                     <div class="cl-check" onclick="toggleItem(${i.id}, ${i.done})">${i.done ? '✓' : ''}</div>
