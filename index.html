@@ -782,6 +782,63 @@
             refreshChecklist(); 
             refreshItinerary();
         };
+        // ... 前面的程式碼保持不變 ...
+
+// --- ✨ 新增：Realtime 頻道變數 ✨ ---
+let itineraryChannel = null;
+let checklistChannel = null;
+
+// --- ✨ 新增：啟動即時同步的函式 ✨ ---
+function subscribeRealtime() {
+    // 如果已經有連線，先清除
+    supabase.removeAllChannels();
+
+    // 訂閱行程表變動
+    itineraryChannel = supabase.channel('itinerary-changes')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'itinerary_items' }, payload => {
+            console.log('行程有變動:', payload);
+            refreshItinerary(); // 收到通知就刷新
+        })
+        .subscribe();
+
+    // 訂閱清單變動
+    checklistChannel = supabase.channel('checklist-changes')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'checklist_items' }, payload => {
+            console.log('清單有變動:', payload);
+            refreshChecklist(); // 收到通知就刷新
+        })
+        .subscribe();
+}
+
+// --- ✨ 你的問題核心：監聽切換分頁/離開 App ✨ ---
+document.addEventListener("visibilitychange", () => {
+    if (document.hidden) {
+        // 當使用者縮小瀏覽器或關掉螢幕：斷開連線省電省流量
+        console.log('應用進入後台，中斷 Realtime 連線');
+        supabase.removeAllChannels();
+    } else {
+        // 當使用者回到網頁：手動刷新一次，並重新連線
+        console.log('應用回到前台，重新同步資料');
+        refreshItinerary();
+        refreshChecklist();
+        refreshMembers();
+        subscribeRealtime();
+    }
+});
+
+// 修改原本的 window.onload
+window.onload = () => {
+    refreshMembers(); 
+    refreshCategories();
+    refreshChecklist(); 
+    refreshItinerary();
+    
+    // 初次載入時啟動即時同步
+    subscribeRealtime();
+};
+
+// ... 後面的 updateClock, createPetal 等保持不變 ...
+
     </script>
 </body>
 </html>
