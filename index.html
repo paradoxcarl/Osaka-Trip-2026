@@ -130,9 +130,11 @@
         .time-range input { flex: 1; text-align: center; }
         .modal-btns { display: flex; gap: 10px; margin-top: 20px; }
         .modal-btns button { flex: 1; padding: 12px; border-radius: 50px; border: none; font-weight: bold; cursor: pointer; transition: 0.2s; }
+        .modal-btns button:active { transform: scale(0.95); }
         .btn-cancel { background: #eee; color: #777; }
         .btn-save { background: var(--dark-pink); color: white; box-shadow: 0 4px 10px rgba(255,143,163,0.3); }
         
+        /* 🎨 新增按鈕樣式優化 */
         .btn-add-inline { 
             flex: 0 0 80px; 
             background: var(--main-purple); 
@@ -214,18 +216,17 @@
         .manage-icon-btn,
         .back-btn-styled,
         .cl-check,
-        .detail-close,
-        .who-chip,
-        .phrase-item {
-            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        .detail-close {
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
             cursor: pointer;
             user-select: none;
         }
 
-        /* 懸停效果 (適用於電腦) */
+        /* 懸停效果 (適用於有滑鼠的裝置) */
         @media (hover: hover) {
-            .date-btn:hover, .itin-action-btn:hover, .menu-btn:hover, .cl-tab-btn:hover, .btn-save:hover, .btn-add-inline:hover, .who-chip:hover {
+            .date-btn:hover, .itin-action-btn:hover, .menu-btn:hover, .cl-tab-btn:hover, .btn-save:hover, .btn-add-inline:hover {
                 transform: translateY(-2px);
+                box-shadow: 0 10px 20px rgba(179, 157, 219, 0.3);
                 filter: brightness(1.05);
             }
             .fab:hover {
@@ -234,7 +235,7 @@
             }
         }
 
-        /* 點擊瞬間的壓縮感 (核心互動特效) */
+        /* 點擊瞬間的壓縮感 (觸覺回饋) */
         .date-btn:active, 
         .itin-card:active, 
         .itin-action-btn:active, 
@@ -242,21 +243,19 @@
         .cl-tab-btn:active, 
         .cl-item:active, 
         .fab:active, 
+        .nav-tab:active, 
         .btn-save:active, 
         .btn-cancel:active, 
         .btn-add-inline:active,
         .manage-icon-btn:active,
         .back-btn-styled:active,
-        .cl-check:active,
-        .who-chip:active,
-        .phrase-item:active {
+        .cl-check:active {
             transform: scale(0.92) !important;
             filter: brightness(0.9);
         }
 
-        /* 導覽列圖示點擊動畫 */
+        /* 導覽列圖示動畫 */
         .nav-tab .nav-icon { transition: transform 0.3s ease; }
-        .nav-tab:active .nav-icon { transform: scale(1.3) translateY(-5px); }
         .nav-tab.active .nav-icon { transform: scale(1.2) translateY(-3px); }
         
     </style>
@@ -323,11 +322,11 @@
             </div>
             <div class="form-group">
                 <label>交通方式及細節 (選填)</label>
-                <textarea id="form-trans" rows="2" placeholder="(選填) 例如：翼龍、鷹馬..."></textarea>
+                <textarea id="form-trans" rows="2" placeholder="(選填) 例如：翼龍、鷹馬、礦車..."></textarea>
             </div>
             <div class="form-group">
                 <label>備註 / 提醒 (選填)</label>
-                <textarea id="form-notes" rows="4" placeholder="(選填)"></textarea>
+                <textarea id="form-notes" rows="4" placeholder="(選填) 妳說說，我不聽..."></textarea>
             </div>
             <div class="modal-btns">
                 <button class="btn-cancel" onclick="closeModal('itin-modal')">取消</button>
@@ -370,7 +369,6 @@
             <div class="menu-btn" onclick="showCategory('food')"><span>🍰</span>餐廳用語</div>
             <div class="menu-btn" onclick="showCategory('common')"><span>🍭</span>常用語</div>
         </div>
-
         <div id="cat-hotel" class="phrase-list">
             <div class="phrase-item" onclick="openFS('チェックインをお願いします', '我要辦理入住', 'Chekkuin o onegaishimasu')">
                 <b>我要辦理入住</b><p>チェックインをお願いします</p><small class="romaji">Chekkuin o onegaishimasu</small></div>
@@ -593,7 +591,7 @@
         </div>
     </div>
 
-    <div id="cl-item-modal" class="overlay"><div class="modal-content"><div class="modal-title" id="cl-modal-title">清單項目</div><input type="hidden" id="cl-edit-id"><div class="form-group"><label>內容</label><input type="text" id="cl-text-input" placeholder="想帶什麼？"></div><div class="modal-btns"><button class="btn-cancel" onclick="closeModal('cl-item-modal')">取消</button><button class="btn-save" onclick="saveClItem()">儲存</button></div></div></div>
+    <div id="cl-item-modal" class="overlay"><div class="modal-content"><div class="modal-title" id="cl-modal-title">清單項目</div><input type="hidden" id="cl-edit-id"><div class="form-group"><label>內容</label><input type="text" id="cl-text-input" placeholder="你想好了嗎？"></div><div class="modal-btns"><button class="btn-cancel" onclick="closeModal('cl-item-modal')">取消</button><button class="btn-save" onclick="saveClItem()">儲存</button></div></div></div>
 
     <nav class="bottom-nav">
         <a href="#" class="nav-tab active" onclick="switchTab('itinerary', this)"><span class="nav-icon">📅</span><span>行程</span></a>
@@ -639,7 +637,7 @@
             if (!query) return;
             const q = query.trim();
             if (q.startsWith('http')) window.open(q, '_blank');
-            else window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(q)}`);
+            else window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(q)}`, '_blank');
         }
 
         function renderItinerary() {
@@ -764,6 +762,16 @@
         async function refreshMembers() {
             const remote = await sbFetch('members?order=id.asc');
             let data = (remote && remote.length) ? remote : [{name: '沒有人'}];
+            const sortOrder = JSON.parse(localStorage.getItem('osaka_member_sort') || '[]');
+            if (sortOrder.length > 0) {
+                data.sort((a, b) => {
+                    let idxA = sortOrder.indexOf(a.id);
+                    let idxB = sortOrder.indexOf(b.id);
+                    if (idxA === -1) idxA = 999;
+                    if (idxB === -1) idxB = 999;
+                    return idxA - idxB;
+                });
+            }
             membersData = data;
             renderWhoSelector();
         }
@@ -773,12 +781,19 @@
             `).join(''); 
         }
         function setWho(name) { currentWho = name; localStorage.setItem('osaka_who', name); renderWhoSelector(); renderItems(); }
-        
+        function sortWho(idx, direction) {
+            const newIdx = idx + direction; if (newIdx < 0 || newIdx >= membersData.length) return;
+            const temp = membersData[idx]; membersData[idx] = membersData[newIdx]; membersData[newIdx] = temp;
+            localStorage.setItem('osaka_member_sort', JSON.stringify(membersData.map(m => m.id)));
+            openWhoManageModal(); renderWhoSelector();
+        }
         function openWhoManageModal() {
             document.getElementById('who-list-container').innerHTML = membersData.map((m, i) => `
                 <div style="display:flex; justify-content:space-between; align-items:center; padding:12px; border-bottom:1px solid #eee;">
                     <span style="font-weight:700;">${m.name}</span>
                     <div class="manage-btn-group">
+                        <button class="manage-icon-btn btn-sort-small" onclick="sortWho(${i}, -1)">▲</button>
+                        <button class="manage-icon-btn btn-sort-small" onclick="sortWho(${i}, 1)">▼</button>
                         <button class="manage-icon-btn btn-edit-small" onclick="editWho(${m.id}, '${m.name}')">✏️</button>
                         <button class="manage-icon-btn btn-del-small" onclick="deleteWhoMember(${m.id})">🗑️</button>
                     </div>
@@ -798,7 +813,7 @@
 
         async function refreshCategories() {
             const data = await sbFetch('checklist_categories?order=sort_order.asc');
-            categoriesData = data;
+            categoriesData = data.length > 0 ? data : [];
             if (!currentCat && categoriesData.length > 0) currentCat = categoriesData[0].name;
             renderChecklistTabs();
             renderItems();
@@ -815,16 +830,14 @@
             }
         }
 
-        function openCatModal() {
-            document.getElementById('cat-list-container').innerHTML = categoriesData.map((c, i) => `
-                <div style="display:flex; justify-content:space-between; align-items:center; padding:12px; border-bottom:1px solid #eee;">
-                    <span style="font-weight:700;">${c.name}</span>
-                    <div class="manage-btn-group">
-                        <button class="manage-icon-btn btn-del-small" onclick="deleteCategory(${c.id}, '${c.name}')">🗑️</button>
-                    </div>
-                </div>
-            `).join('');
-            document.getElementById('cat-modal').classList.add('active');
+        async function editCategory(id, oldName) {
+            const newName = prompt('請輸入新的分類名稱：', oldName);
+            if (newName && newName !== oldName) {
+                await sbFetch(`checklist_categories?id=eq.${id}`, { method: 'PATCH', body: JSON.stringify({ name: newName }) });
+                if (currentCat === oldName) currentCat = newName;
+                await refreshCategories();
+                openCatModal();
+            }
         }
 
         async function deleteCategory(id, name) {
@@ -834,6 +847,33 @@
                 await refreshCategories();
                 openCatModal();
             }
+        }
+
+        async function sortCategory(idx, direction) {
+            const targetIdx = idx + direction;
+            if (targetIdx < 0 || targetIdx >= categoriesData.length) return;
+            const current = categoriesData[idx];
+            const target = categoriesData[targetIdx];
+            const tempSort = current.sort_order;
+            await sbFetch(`checklist_categories?id=eq.${current.id}`, { method: 'PATCH', body: JSON.stringify({ sort_order: target.sort_order }) });
+            await sbFetch(`checklist_categories?id=eq.${target.id}`, { method: 'PATCH', body: JSON.stringify({ sort_order: tempSort }) });
+            await refreshCategories();
+            openCatModal();
+        }
+
+        function openCatModal() {
+            document.getElementById('cat-list-container').innerHTML = categoriesData.map((c, i) => `
+                <div style="display:flex; justify-content:space-between; align-items:center; padding:12px; border-bottom:1px solid #eee;">
+                    <span style="font-weight:700;">${c.name}</span>
+                    <div class="manage-btn-group">
+                        <button class="manage-icon-btn btn-sort-small" onclick="sortCategory(${i}, -1)">▲</button>
+                        <button class="manage-icon-btn btn-sort-small" onclick="sortCategory(${i}, 1)">▼</button>
+                        <button class="manage-icon-btn btn-edit-small" onclick="editCategory(${c.id}, '${c.name}')">✏️</button>
+                        <button class="manage-icon-btn btn-del-small" onclick="deleteCategory(${c.id}, '${c.name}')">🗑️</button>
+                    </div>
+                </div>
+            `).join('');
+            document.getElementById('cat-modal').classList.add('active');
         }
 
         async function refreshChecklist() {
@@ -909,13 +949,64 @@
             refreshChecklist(); 
             refreshItinerary();
         };
+        // ... 前面的程式碼保持不變 ...
 
-        // Visibility Change 同步機制
-        document.addEventListener("visibilitychange", () => {
-            if (!document.hidden) {
-                refreshMembers(); refreshCategories(); refreshChecklist(); refreshItinerary();
-            }
-        });
+// --- ✨ 新增：Realtime 頻道變數 ✨ ---
+let itineraryChannel = null;
+let checklistChannel = null;
+
+// --- ✨ 新增：啟動即時同步的函式 ✨ ---
+function subscribeRealtime() {
+    // 如果已經有連線，先清除
+    supabase.removeAllChannels();
+
+    // 訂閱行程表變動
+    itineraryChannel = supabase.channel('itinerary-changes')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'itinerary_items' }, payload => {
+            console.log('行程有變動:', payload);
+            refreshItinerary(); // 收到通知就刷新
+        })
+        .subscribe();
+
+    // 訂閱清單變動
+    checklistChannel = supabase.channel('checklist-changes')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'checklist_items' }, payload => {
+            console.log('清單有變動:', payload);
+            refreshChecklist(); // 收到通知就刷新
+        })
+        .subscribe();
+}
+
+// --- ✨ 你的問題核心：監聽切換分頁/離開 App ✨ ---
+document.addEventListener("visibilitychange", () => {
+    if (document.hidden) {
+        // 當使用者縮小瀏覽器或關掉螢幕：斷開連線省電省流量
+        console.log('應用進入後台，中斷 Realtime 連線');
+        supabase.removeAllChannels();
+    } else {
+        // 當使用者回到網頁：手動刷新一次，並重新連線
+        console.log('應用回到前台，重新同步資料');
+        refreshMembers(); 
+        refreshCategories();
+        refreshChecklist(); 
+        refreshItinerary();
+        subscribeRealtime();
+    }
+});
+
+// 修改原本的 window.onload
+window.onload = () => {
+    refreshMembers(); 
+    refreshCategories();
+    refreshChecklist(); 
+    refreshItinerary();
+    
+    // 初次載入時啟動即時同步
+    subscribeRealtime();
+};
+
+// ... 後面的 updateClock, createPetal 等保持不變 ...
+
     </script>
 </body>
 </html>
