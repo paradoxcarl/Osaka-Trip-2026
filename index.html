@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>🌸 Osaka Trip 🌸</title>
+    <title>Osaka Trip</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🌸</text></svg>">
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
     <style>
@@ -111,20 +111,43 @@
         .detail-icon { font-size: 1.5rem; flex-shrink: 0; }
         .detail-text-label { font-size: 0.75rem; color: #aaa; display: block; margin-bottom: 4px; }
         .detail-text-content { font-size: 1rem; color: var(--text-color); font-weight: 500; white-space: pre-wrap; }
-        .detail-close { position: absolute; top: 15px; right: 15px; width: 35px; height: 35px; border-radius: 50%; background: rgba(255,255,255,0.2); color: white; border: none; font-size: 1.2rem; cursor: pointer; }
+        .detail-close { position: absolute; top: 15px; right: 15px; width: 35px; height: 35px; border-radius: 50%; background: rgba(255,255,255,0.2); color: white; border: none; font-size: 1.2rem; cursor: pointer; display: flex; align-items: center; justify-content: center; }
         
-        .modal-content { background: white; width: 100%; max-width: 350px; border-radius: 25px; padding: 25px; box-shadow: 0 15px 35px rgba(0,0,0,0.2); animation: fadeInUp 0.3s ease-out; }
+        .modal-content { background: white; width: 100%; max-width: 350px; border-radius: 25px; padding: 25px; box-shadow: 0 15px 35px rgba(0,0,0,0.2); animation: fadeInUp 0.3s ease-out; position: relative; }
         .modal-title { font-size: 1.2rem; font-weight: 800; color: var(--main-purple); margin-bottom: 20px; text-align: center; }
         .form-group { margin-bottom: 15px; }
         .form-group label { display: block; font-size: 0.75rem; color: #aaa; margin-bottom: 5px; font-weight: bold; }
-        .form-group input, .form-group textarea { width: 100%; border: 2px solid #f3e5f5; border-radius: 12px; padding: 10px; font-family: inherit; font-size: 0.95rem; outline: none; }
+        .form-group input, .form-group textarea { width: 100%; border: 2px solid #f3e5f5; border-radius: 12px; padding: 12px; font-family: inherit; font-size: 0.95rem; outline: none; transition: 0.3s; }
+        .form-group input:focus { border-color: var(--main-purple); background: #fcfaff; }
+        
         .time-range { display: flex; align-items: center; gap: 10px; }
         .time-range input { flex: 1; text-align: center; }
         .modal-btns { display: flex; gap: 10px; margin-top: 20px; }
-        .modal-btns button { flex: 1; padding: 12px; border-radius: 50px; border: none; font-weight: bold; cursor: pointer; }
+        .modal-btns button { flex: 1; padding: 12px; border-radius: 50px; border: none; font-weight: bold; cursor: pointer; transition: 0.2s; }
+        .modal-btns button:active { transform: scale(0.95); }
         .btn-cancel { background: #eee; color: #777; }
-        .btn-save { background: var(--dark-pink); color: white; }
-        .btn-delete-itin { background: #ffebee; color: #e53935; border: 1.5px solid #ffcdd2 !important; }
+        .btn-save { background: var(--dark-pink); color: white; box-shadow: 0 4px 10px rgba(255,143,163,0.3); }
+        
+        /* 🎨 新增按鈕樣式優化 */
+        .btn-add-inline { 
+            flex: 0 0 80px; 
+            background: var(--main-purple); 
+            color: white; 
+            border: none; 
+            border-radius: 12px; 
+            font-weight: 700; 
+            font-size: 0.9rem; 
+            cursor: pointer; 
+            box-shadow: 0 4px 10px rgba(179,157,219,0.3);
+            transition: 0.2s;
+        }
+
+        .btn-delete-itin-top { 
+            position: absolute; top: 15px; left: 15px; width: 35px; height: 35px; 
+            border-radius: 50%; background: #fff5f5; color: #e53935; border: 1.5px solid #ffcdd2; 
+            font-size: 1rem; cursor: pointer; display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05); z-index: 10;
+        }
 
         .card { background: var(--white); padding: 20px; border-radius: 20px; box-shadow: var(--card-shadow); }
         .input-group { margin-bottom: 15px; position: relative; }
@@ -171,6 +194,64 @@
         .btn-edit-small { color: #4285F4; }
         .btn-del-small { color: #e53935; }
         .btn-sort-small { color: #9e9e9e; background: #eee; }
+
+        /* ✨ 一致的按鈕互動特效 ✨ */
+        .date-btn, 
+        .itin-card, 
+        .itin-action-btn, 
+        .menu-btn, 
+        .cl-tab-btn, 
+        .cl-item, 
+        .fab, 
+        .nav-tab, 
+        .btn-save, 
+        .btn-cancel, 
+        .btn-add-inline,
+        .manage-icon-btn,
+        .back-btn-styled,
+        .cl-check,
+        .detail-close {
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        /* 懸停效果 (適用於有滑鼠的裝置) */
+        @media (hover: hover) {
+            .date-btn:hover, .itin-action-btn:hover, .menu-btn:hover, .cl-tab-btn:hover, .btn-save:hover, .btn-add-inline:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 10px 20px rgba(179, 157, 219, 0.3);
+                filter: brightness(1.05);
+            }
+            .fab:hover {
+                transform: scale(1.1) rotate(5deg);
+                box-shadow: 0 12px 25px rgba(255, 143, 163, 0.5);
+            }
+        }
+
+        /* 點擊瞬間的壓縮感 (觸覺回饋) */
+        .date-btn:active, 
+        .itin-card:active, 
+        .itin-action-btn:active, 
+        .menu-btn:active, 
+        .cl-tab-btn:active, 
+        .cl-item:active, 
+        .fab:active, 
+        .nav-tab:active, 
+        .btn-save:active, 
+        .btn-cancel:active, 
+        .btn-add-inline:active,
+        .manage-icon-btn:active,
+        .back-btn-styled:active,
+        .cl-check:active {
+            transform: scale(0.92) !important;
+            filter: brightness(0.9);
+        }
+
+        /* 導覽列圖示動畫 */
+        .nav-tab .nav-icon { transition: transform 0.3s ease; }
+        .nav-tab.active .nav-icon { transform: scale(1.2) translateY(-3px); }
+        
     </style>
 </head>
 <body>
@@ -213,6 +294,8 @@
 
     <div id="itin-modal" class="overlay">
         <div class="modal-content">
+            <button id="btn-delete-itin" class="btn-delete-itin-top" style="display:none;" onclick="delItinFromModal()">🗑️</button>
+            <button class="detail-close" style="background:rgba(179, 157, 219, 0.1); color:var(--main-purple); top:15px; right:15px;" onclick="closeModal('itin-modal')">✕</button>
             <div class="modal-title" id="modal-title">新增行程</div>
             <input type="hidden" id="edit-id">
             <div class="form-group">
@@ -232,15 +315,14 @@
                 <input type="text" id="form-map-query" placeholder="(選填) 輸入地點名稱或網址...">
             </div>
             <div class="form-group">
-                <label>交通方式及細節 (選填，可換行)</label>
-                <textarea id="form-trans" rows="2" placeholder="(選填) 例如：地鐵御堂筋線 -> 公車 21 號..."></textarea>
+                <label>交通方式及細節 (選填)</label>
+                <textarea id="form-trans" rows="2" placeholder="(選填) 例如：翼龍、鷹馬、礦車..."></textarea>
             </div>
             <div class="form-group">
-                <label>備註 / 提醒 (選填，可換行)</label>
-                <textarea id="form-notes" rows="4" placeholder="(選填) 這裡可以換行寫詳細備註..."></textarea>
+                <label>備註 / 提醒 (選填)</label>
+                <textarea id="form-notes" rows="4" placeholder="(選填) 妳說說，我不聽..."></textarea>
             </div>
             <div class="modal-btns">
-                <button id="btn-delete-itin" class="btn-cancel btn-delete-itin" style="display:none;" onclick="delItinFromModal()">刪除</button>
                 <button class="btn-cancel" onclick="closeModal('itin-modal')">取消</button>
                 <button class="btn-save" onclick="saveItin()">儲存行程</button>
             </div>
@@ -306,8 +388,42 @@
         <div id="cl-items-list"></div>
     </div>
 
-    <div id="who-manage-modal" class="overlay"><div class="modal-content"><div class="modal-title">旅伴管理</div><div id="who-list-container" style="max-height: 250px; overflow-y: auto; margin-bottom: 15px; border: 1px solid #f3e5f5; border-radius: 12px; padding: 5px;"></div><div class="form-group"><label>新增旅伴</label><div style="display: flex; gap: 8px;"><input type="text" id="new-who-input" placeholder="名稱"><button class="btn-save" style="flex: 0 0 60px; padding: 5px;" onclick="addWho()">新增</button></div></div><div class="modal-btns"><button class="btn-cancel" style="width: 100%;" onclick="closeModal('who-manage-modal')">關閉</button></div></div></div>
-    <div id="cat-modal" class="overlay"><div class="modal-content"><div class="modal-title">分類管理</div><div id="cat-list-container" style="max-height: 250px; overflow-y: auto; margin-bottom: 15px; border: 1px solid #f3e5f5; border-radius: 12px; padding: 5px;"></div><div class="form-group"><label>新增分類</label><div style="display: flex; gap: 8px;"><input type="text" id="new-cat-input" placeholder="名稱"><button class="btn-save" style="flex: 0 0 60px; padding: 5px;" onclick="addCategory()">新增</button></div></div><div class="modal-btns"><button class="btn-cancel" style="width: 100%;" onclick="closeModal('cat-modal')">關閉</button></div></div></div>
+    <div id="who-manage-modal" class="overlay">
+        <div class="modal-content">
+            <button class="detail-close" style="background:rgba(179, 157, 219, 0.1); color:var(--main-purple); top:15px; right:15px;" onclick="closeModal('who-manage-modal')">✕</button>
+            <div class="modal-title">旅伴管理</div>
+            <div id="who-list-container" style="max-height: 250px; overflow-y: auto; margin-bottom: 15px; border: 2px solid #fcfaff; border-radius: 12px;"></div>
+            <div class="form-group">
+                <label>新增旅伴</label>
+                <div style="display: flex; gap: 10px;">
+                    <input type="text" id="new-who-input" placeholder="名稱">
+                    <button class="btn-add-inline" onclick="addWho()">新增</button>
+                </div>
+            </div>
+            <div class="modal-btns">
+                <button class="btn-cancel" style="width: 100%;" onclick="closeModal('who-manage-modal')">關閉</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="cat-modal" class="overlay">
+        <div class="modal-content">
+            <button class="detail-close" style="background:rgba(179, 157, 219, 0.1); color:var(--main-purple); top:15px; right:15px;" onclick="closeModal('cat-modal')">✕</button>
+            <div class="modal-title">分類管理</div>
+            <div id="cat-list-container" style="max-height: 250px; overflow-y: auto; margin-bottom: 15px; border: 2px solid #fcfaff; border-radius: 12px;"></div>
+            <div class="form-group">
+                <label>新增分類</label>
+                <div style="display: flex; gap: 10px;">
+                    <input type="text" id="new-cat-input" placeholder="分類名稱">
+                    <button class="btn-add-inline" onclick="addCategory()">新增</button>
+                </div>
+            </div>
+            <div class="modal-btns">
+                <button class="btn-cancel" style="width: 100%;" onclick="closeModal('cat-modal')">關閉</button>
+            </div>
+        </div>
+    </div>
+
     <div id="cl-item-modal" class="overlay"><div class="modal-content"><div class="modal-title" id="cl-modal-title">清單項目</div><input type="hidden" id="cl-edit-id"><div class="form-group"><label>內容</label><input type="text" id="cl-text-input" placeholder="你想好了嗎？"></div><div class="modal-btns"><button class="btn-cancel" onclick="closeModal('cl-item-modal')">取消</button><button class="btn-save" onclick="saveClItem()">儲存</button></div></div></div>
 
     <nav class="bottom-nav">
@@ -393,7 +509,7 @@
                 document.getElementById('form-map-query').value = item.map_query || '';
                 document.getElementById('form-trans').value = item.transport || '';
                 document.getElementById('form-notes').value = item.notes || '';
-                delBtn.style.display = 'block';
+                delBtn.style.display = 'flex';
             } else {
                 document.getElementById('modal-title').innerText = '新增行程';
                 document.getElementById('edit-id').value = '';
@@ -472,11 +588,10 @@
         // --- 旅伴與分類管理 ---
         let currentWho = localStorage.getItem('osaka_who') || '沒有人';
         let membersData = [];
-        let categoriesData = []; // 改為從 Supabase 讀取的物件陣列
+        let categoriesData = []; 
         let currentCat = '';
         let allItems = [];
 
-        // 旅伴管理
         async function refreshMembers() {
             const remote = await sbFetch('members?order=id.asc');
             let data = (remote && remote.length) ? remote : [{name: '沒有人'}];
@@ -529,7 +644,6 @@
         }
         async function deleteWhoMember(id) { if (confirm(`確定刪除？`)) { await sbFetch(`members?id=eq.${id}`, { method: 'DELETE' }); await refreshMembers(); openWhoManageModal(); } }
 
-        // --- 清單分類連動 Supabase ---
         async function refreshCategories() {
             const data = await sbFetch('checklist_categories?order=sort_order.asc');
             categoriesData = data.length > 0 ? data : [];
@@ -560,7 +674,7 @@
         }
 
         async function deleteCategory(id, name) {
-            if (confirm(`確定刪除分類「${name}」？這不會刪除該分類下的項目，但它們將無法顯示。`)) {
+            if (confirm(`確定刪除分類「${name}」？`)) {
                 await sbFetch(`checklist_categories?id=eq.${id}`, { method: 'DELETE' });
                 if (currentCat === name) currentCat = categoriesData[0]?.name || '';
                 await refreshCategories();
@@ -571,14 +685,11 @@
         async function sortCategory(idx, direction) {
             const targetIdx = idx + direction;
             if (targetIdx < 0 || targetIdx >= categoriesData.length) return;
-            
             const current = categoriesData[idx];
             const target = categoriesData[targetIdx];
-            
             const tempSort = current.sort_order;
             await sbFetch(`checklist_categories?id=eq.${current.id}`, { method: 'PATCH', body: JSON.stringify({ sort_order: target.sort_order }) });
             await sbFetch(`checklist_categories?id=eq.${target.id}`, { method: 'PATCH', body: JSON.stringify({ sort_order: tempSort }) });
-            
             await refreshCategories();
             openCatModal();
         }
@@ -638,8 +749,12 @@
         async function delItem(id) { if (confirm('刪除項目？')) { await sbFetch(`checklist_items?id=eq.${id}`, { method: 'DELETE' }); refreshChecklist(); } }
 
         let currentTabId = 'itinerary';
-        function handleFabClick() { if (currentTabId === 'itinerary') openItinModal(); else if (currentTabId === 'checklist') openClItemModal(); }
+        function handleFabClick() { 
+            if (navigator.vibrate) navigator.vibrate(5); 
+            if (currentTabId === 'itinerary') openItinModal(); else if (currentTabId === 'checklist') openClItemModal(); 
+        }
         function switchTab(id, el) {
+            if (navigator.vibrate) navigator.vibrate(5);
             currentTabId = id; document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active')); document.getElementById('page-' + id).classList.add('active');
             document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active')); el.classList.add('active');
             document.getElementById('add-fab').style.display = (id === 'checklist' || id === 'itinerary') ? 'flex' : 'none';
