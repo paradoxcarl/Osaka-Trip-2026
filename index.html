@@ -107,6 +107,15 @@
             cursor: pointer; min-height: 90px;
         }
         
+
+	#cl-items-list {
+    	/* 確保清單底部有足夠空間，不被 FAB 遮擋 */
+    	padding-bottom: 80px; 
+    	/* 讓滾動更平滑 */
+    	overflow-y: auto;
+    	-webkit-overflow-scrolling: touch;
+	}
+
         .itin-time {
             background: linear-gradient(to bottom, var(--header-purple-light), #fff);
             color: var(--main-purple); font-family: 'JetBrains Mono', monospace; 
@@ -364,7 +373,7 @@
             <div class="date-btn active" onclick="switchDay(8, this)"><span class="date-day">第一日</span><span class="date-num">4/8</span><span class="date-week">(三、水)</span></div>
             <div class="date-btn" onclick="switchDay(9, this)"><span class="date-day">第二日</span><span class="date-num">4/9</span><span class="date-week">(四、木)</span></div>
             <div class="date-btn" onclick="switchDay(10, this)"><span class="date-day">第三日</span><span class="date-num">4/10</span><span class="date-week">(五、金)</span></div>
-            <div class="date-btn" onclick="switchDay(11, this)"><span class="date-day">第四日</span><span class="date-num">4/11</span><span class="date-week">(六、六)</span></div>
+            <div class="date-btn" onclick="switchDay(11, this)"><span class="date-day">第四日</span><span class="date-num">4/11</span><span class="date-week">(六、土)</span></div>
             <div class="date-btn" onclick="switchDay(12, this)"><span class="date-day">第五日</span><span class="date-num">4/12</span><span class="date-week">(日、日)</span></div>
             <div class="date-btn" onclick="switchDay(13, this)"><span class="date-day">第六日</span><span class="date-num">4/13</span><span class="date-week">(一、月)</span></div>
             <div class="date-btn" onclick="switchDay(14, this)"><span class="date-day">第七日</span><span class="date-num">4/14</span><span class="date-week">(二、火)</span></div>
