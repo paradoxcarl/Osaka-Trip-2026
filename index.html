@@ -787,7 +787,7 @@
         }
 
         // --- 旅伴與分類管理 ---
-        let currentWho = localStorage.getItem('osaka_who') || '沒有人';
+        let currentWho = [];
         let membersData = [];
         let categoriesData = []; 
         let currentCat = '';
@@ -795,7 +795,7 @@
 
         async function refreshMembers() {
             const remote = await sbFetch('members?order=id.asc');
-            let data = (remote && remote.length) ? remote : [{name: '沒有人'}];
+            let data = (remote && remote.length) ? remote : [{name}];
             const sortOrder = JSON.parse(localStorage.getItem('osaka_member_sort') || '[]');
             if (sortOrder.length > 0) {
                 data.sort((a, b) => {
