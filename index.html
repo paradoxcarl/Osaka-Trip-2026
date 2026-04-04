@@ -211,7 +211,7 @@
         .cl-tab-btn { flex: 0 0 auto; padding: 8px 16px; border-radius: 50px; border: 2px solid var(--main-purple); background: white; color: var(--main-purple); font-weight: 700; font-size: 0.85rem; cursor: pointer; }
         .cl-tab-btn.active { background: var(--main-purple); color: white; }
         .cl-tab-manage { font-size: 0.7rem; padding: 6px 12px; background: #eee; border: none; border-radius: 50px; color: #777; cursor: pointer; font-weight: bold; flex-shrink: 0; }
-        .cl-item { display: flex; align-items: center; gap: 12px; background: white; padding: 16px; border-radius: 18px; margin-bottom: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.04); }
+        .cl-item { display: flex; align-items: center; gap: 12px; background: white; padding: 16px; border-radius: 18px; margin-bottom: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.04); white-space: pre-wrap;}
         .cl-item.done { opacity: 0.5; }
         .cl-item.done .cl-text { text-decoration: line-through; }
         .cl-check { width: 28px; height: 28px; border-radius: 50%; border: 2px solid var(--main-purple); display: flex; align-items: center; justify-content: center; flex-shrink: 0; cursor: pointer; }
@@ -355,11 +355,11 @@
             </div>
             <div class="form-group">
                 <label>交通方式 / 細節 (選填)</label>
-                <textarea id="form-trans" rows="2" placeholder="(選填) 翼龍、鷹馬、礦車..."></textarea>
+                <textarea id="form-trans" rows="3" placeholder="(選填) 翼龍、鷹馬、礦車..."></textarea>
             </div>
             <div class="form-group">
                 <label>備註 / 提醒 (選填)</label>
-                <textarea id="form-notes" rows="4" placeholder="(選填) 妳說說，我不聽..."></textarea>
+                <textarea id="form-notes" rows="3" placeholder="(選填) 妳說說，我不聽..."></textarea>
             </div>
             <div class="modal-btns">
                 <button class="btn-cancel" onclick="closeModal('itin-modal')">取消</button>
@@ -624,8 +624,8 @@
         </div>
     </div>
 
-    <div id="cl-item-modal" class="overlay"><div class="modal-content"><div class="modal-title" id="cl-modal-title">清單項目</div><input type="hidden" id="cl-edit-id"><div class="form-group"><label>內容</label><input type="text" id="cl-text-input" placeholder="你想好了嗎？"></div><div class="modal-btns"><button class="btn-cancel" onclick="closeModal('cl-item-modal')">取消</button><button class="btn-save" onclick="saveClItem()">儲存</button></div></div></div>
-
+    <div id="cl-item-modal" class="overlay"><div class="modal-content"><div class="modal-title" id="cl-modal-title">清單項目</div><input type="hidden" id="cl-edit-id"><div class="form-group"><label>內容</label><textarea id="cl-text-input" placeholder="新增清單項目..." rows="3"></textarea><div class="modal-btns"><button class="btn-cancel" onclick="closeModal('cl-item-modal')">取消</button><button class="btn-save" onclick="saveClItem()">儲存</button></div></div></div></div>
+    
     <nav class="bottom-nav">
         <a href="#" class="nav-tab active" onclick="switchTab('itinerary', this)"><span class="nav-icon">📅</span><span>行程</span></a>
         <a href="#" class="nav-tab" onclick="switchTab('exchange', this)"><span class="nav-icon">💰</span><span>匯率</span></a>
@@ -636,6 +636,7 @@
     <div id="fs-overlay" onclick="this.classList.remove('active')"><div id="fs-jp" style="font-size:2.2rem; font-weight:700; color:var(--main-purple); margin-bottom:20px;"></div><div id="fs-ch" style="font-size:1.6rem; color:var(--dark-pink); font-weight:700;"></div><div id="fs-romaji" style="font-size:1.2rem; color:#b39ddb; margin-top:15px; font-style:italic;"></div></div>
 
     <script>
+    
         const SUPABASE_URL = 'https://eyggmroicartukfsnbbq.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV5Z2dtcm9pY2FydHVrZnNuYmJxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0MzIxMjgsImV4cCI6MjA5MDAwODEyOH0.IpMcIHdggP9Voh71fz5bRKOPW-iPcwK5sIAxVZVrrB4';
         
@@ -908,6 +909,7 @@
             `).join('');
             document.getElementById('cat-modal').classList.add('active');
         }
+let checklistSortableInstance = null; // 用來存放 Sortable 實例
 
 async function refreshChecklist() {
     // 加上 order=sort_order.asc 確保從資料庫抓出來就是排好的
@@ -951,42 +953,52 @@ async function saveNewOrder() {
 
 function renderItems() {
     const listDiv = document.getElementById('cl-items-list');
-    let items = allItems.filter(i => i.category === currentCat);
+    if (!listDiv) return;
+
+    // 過濾出目前選中分類的項目
+    const items = allItems.filter(i => i.category === currentCat);
     
-    if (items.length === 0) { 
-        listDiv.innerHTML = `<div style="text-align: center; color: #b39ddb; padding: 40px 20px;">清單空空如也</div>`; 
-        return; 
+    if (items.length === 0) {
+        listDiv.innerHTML = `<div style="text-align: center; color: #b39ddb; padding: 40px 20px;">清單空空如也</div>`;
+        return;
     }
 
-    // 1. 分成兩組，並各自按 sort_order 排序
+    // 1. 分成未完成與已完成，並排序
     const pending = items.filter(i => !i.done).sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0));
     const completed = items.filter(i => i.done).sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0));
 
-    // 2. 渲染畫面（中間加一個分隔線，讓視覺更清楚）
+    // 2. 渲染畫面
     let html = pending.map(i => renderSingleItem(i)).join('');
-    
     if (completed.length > 0) {
         html += `<div class="cl-divider" style="text-align:center; font-size:12px; color:#ccc; margin:10px 0;">已完成項目</div>`;
         html += completed.map(i => renderSingleItem(i)).join('');
     }
-
+    
     listDiv.innerHTML = html;
 
-    // 3. 初始化 Sortable
-    new Sortable(listDiv, {
+    // ✨✨✨ 修正核心：解決切換分類失效的問題 ✨✨✨
+    
+    // 如果之前已經有建立過拖拉功能，先將它徹底銷毀（解綁舊的監聽器）
+    if (checklistSortableInstance) {
+        checklistSortableInstance.destroy();
+    }
+
+    // 重新建立一個乾淨的拖拉實例，並存入變數中
+    checklistSortableInstance = new Sortable(listDiv, {
         animation: 150,
-        delay: 100,
+        delay: 100, 
         delayOnTouchOnly: false,
         touchStartThreshold: 10,
-        filter: '.cl-check, .cl-del, .cl-divider', // ✨ 分隔線也要過濾掉不能拖
+        filter: '.cl-check, .cl-del, .cl-divider', // 這些元素不能觸發拖拉
         preventOnFilter: false,
         ghostClass: 'cl-item-ghost',
         onEnd: async function (evt) {
-            // ✨ 拖拽結束後，重新計算所有項目的 sort_order
+            // 拖拽結束後更新資料庫排序
             await saveNewOrder();
         }
     });
 }
+
 
 // 輔助函式：減少重複程式碼
 function renderSingleItem(i) {
