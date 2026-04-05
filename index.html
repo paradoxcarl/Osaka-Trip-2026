@@ -3,6 +3,7 @@
 <head>
 
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
 
     <meta charset="UTF-8">
@@ -640,6 +641,8 @@
         const SUPABASE_URL = 'https://eyggmroicartukfsnbbq.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV5Z2dtcm9pY2FydHVrZnNuYmJxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0MzIxMjgsImV4cCI6MjA5MDAwODEyOH0.IpMcIHdggP9Voh71fz5bRKOPW-iPcwK5sIAxVZVrrB4';
         
+	const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
         async function sbFetch(path, options = {}) {
             try {
                 const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
@@ -1106,10 +1109,13 @@ let checklistChannel = null;
 // --- ✨ 新增：啟動即時同步的函式 ✨ ---
 function subscribeRealtime() {
     // 如果已經有連線，先清除
-    supabase.removeAllChannels();
+if (supabaseClient.getChannels().length > 0) {
+        supabaseClient.removeAllChannels();
+    }
+
 
     // 訂閱行程表變動
-    itineraryChannel = supabase.channel('itinerary-changes')
+    itineraryChannel = supabaseClient.channel('itinerary-changes')
         .on('postgres_changes', { event: '*', schema: 'public', table: 'itinerary_items' }, payload => {
             console.log('行程有變動:', payload);
             refreshItinerary(); // 收到通知就刷新
@@ -1117,7 +1123,7 @@ function subscribeRealtime() {
         .subscribe();
 
     // 訂閱清單變動
-    checklistChannel = supabase.channel('checklist-changes')
+    checklistChannel = supabaseClient.channel('checklist-changes')
         .on('postgres_changes', { event: '*', schema: 'public', table: 'checklist_items' }, payload => {
             console.log('清單有變動:', payload);
             refreshChecklist(); // 收到通知就刷新
@@ -1130,7 +1136,7 @@ document.addEventListener("visibilitychange", () => {
     if (document.hidden) {
         // 當使用者縮小瀏覽器或關掉螢幕：斷開連線省電省流量
         console.log('應用進入後台，中斷 Realtime 連線');
-        supabase.removeAllChannels();
+        supabaseClient.removeAllChannels();
     } else {
         // 當使用者回到網頁：手動刷新一次，並重新連線
         console.log('應用回到前台，重新同步資料');
@@ -1153,7 +1159,6 @@ window.onload = () => {
     subscribeRealtime();
 };
 
-// ... 後面的 updateClock, createPetal 等保持不變 ...
 
     </script>
 </body>
