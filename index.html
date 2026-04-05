@@ -787,28 +787,46 @@
         }
 
         // --- 旅伴與分類管理 ---
-        let currentWho = [];
-        let membersData = [];
-        let categoriesData = []; 
-        let currentCat = '';
-        let allItems = [];
+ // 1. 修正變數初始值：將 [] 改為從本地儲存讀取，若無則設為空字串
+let currentWho = localStorage.getItem('currentUserName') || ''; 
+let membersData = [];
+let categoriesData = []; 
+let currentCat = '';
+let allItems = [];
 
-        async function refreshMembers() {
-            const remote = await sbFetch('members?order=id.asc');
-            let data = (remote && remote.length) ? remote : [{name}];
-            const sortOrder = JSON.parse(localStorage.getItem('osaka_member_sort') || '[]');
-            if (sortOrder.length > 0) {
-                data.sort((a, b) => {
-                    let idxA = sortOrder.indexOf(a.id);
-                    let idxB = sortOrder.indexOf(b.id);
-                    if (idxA === -1) idxA = 999;
-                    if (idxB === -1) idxB = 999;
-                    return idxA - idxB;
-                });
-            }
-            membersData = data;
-            renderWhoSelector();
+async function refreshMembers() {
+    const remote = await sbFetch('members?order=id.asc');
+    
+    // 修正：確保 data 至少有一個物件，避免 {name} 未定義報錯
+    let data = (remote && remote.length) ? remote : [{id: 999, name: '未命名'}];
+    
+    const sortOrder = JSON.parse(localStorage.getItem('member_sort') || '[]');
+    if (sortOrder.length > 0) {
+        data.sort((a, b) => {
+            let idxA = sortOrder.indexOf(a.id);
+            let idxB = sortOrder.indexOf(b.id);
+            if (idxA === -1) idxA = 999;
+            if (idxB === -1) idxB = 999;
+            return idxA - idxB;
+        });
+    }
+
+    // --- ✨ 核心修正：自動預選第一位 ✨ ---
+    // 如果 currentWho 是空的（第一次進來），就自動抓 data[0] 的名字
+    if (!currentWho || (Array.isArray(currentWho) && currentWho.length === 0)) {
+        if (data.length > 0 && data[0].name) {
+            currentWho = data[0].name; // 設定為第一個旅伴的名字
+            localStorage.setItem('currentUserName', currentWho); // 存入本地儲存
         }
+    }
+    // ------------------------------------
+
+    membersData = data;
+    renderWhoSelector(); // 重新渲染介面，這時第一個人就會被選中
+}
+
+        
+        
         function renderWhoSelector() { 
             document.getElementById('who-selector').innerHTML = membersData.map(m => `
                 <div class="who-chip ${m.name === currentWho ? 'active' : ''}" onclick="setWho('${m.name}')">${m.name}</div>
@@ -818,7 +836,7 @@
         function sortWho(idx, direction) {
             const newIdx = idx + direction; if (newIdx < 0 || newIdx >= membersData.length) return;
             const temp = membersData[idx]; membersData[idx] = membersData[newIdx]; membersData[newIdx] = temp;
-            localStorage.setItem('osaka_member_sort', JSON.stringify(membersData.map(m => m.id)));
+            localStorage.setItem('member_sort', JSON.stringify(membersData.map(m => m.id)));
             openWhoManageModal(); renderWhoSelector();
         }
         function openWhoManageModal() {
